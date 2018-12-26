@@ -21,17 +21,17 @@ training_file = 'var_features_Dec2018/features_train_samp_Oct2018_well_sampled.t
 
 test_file = 'var_features_Dec2018/features_COSMOS_Dec2018_well_sampled.txt' # file with var features of the unlabeled objects
 
-output = 'classification_Dec2018/classification_COSMOS.csv' #Output text file with predicted classes
+output = 'classification_Dec2018/classification_noDRW_COSMOS.csv' #Output text file with predicted classes
 
-dump_model = "True" # If True dump the rf model into a file
+dump_model = "False" # If True dump the rf model into a file
 
-model_file = 'rf_model_nocolor_Dec18' # where the rf model is written
+model_file = 'rf_model_nocolor_noDRW_accuracy_Dec18'#'rf_model_nocolor_Dec18' # where the rf model is written
 
-stats_file = 'rf_stat_nocolor_Dec18' # where the statistics of the model are saved
+stats_file = 'rf_stat_nocolor_noDRW_accuracy_Dec18'#'rf_stat_nocolor_Dec18' # where the statistics of the model are saved
 
-gen_conf_matrix = "True" #If True generate the confusion matrix
+gen_conf_matrix = "False" #If True generate the confusion matrix
 
-conf_matrix_name = 'confusion_matrix_rf_nocolor_Dec2018.pdf'
+conf_matrix_name = 'confusion_matrix_rf_nocolor_noDRW_Dec2018.pdf'
 
 ###############################################################################
 # To modify the parameters from the terminal
@@ -99,10 +99,10 @@ feature_list = [
     #'g_r',
     #'r_i',
     #'i_z',
-    'tau',
+    #'tau',
     #'tau_lo',
     #'tau_up',
-    'sigma',
+    #'sigma',
     #'sigma_lo',
     #'sigma_up',
     'P_var',
@@ -122,7 +122,7 @@ feature_list = [
     'Std',
     'Meanvariance',
     'MedianBRP',
-    'Rcs',
+    #'Rcs',
     #'PeriodLS',
     #'Period_fit',
     #'Color',
@@ -189,15 +189,19 @@ if dump_model:
     #selection of RF hyper-parameters by cross validation
     print "Selecting hyper-parameters"
 
-    param_dist = {"n_estimators": sp_randint(100, 500), "max_features": sp_randint(2, 11)}
-    model = ensemble.RandomForestClassifier(class_weight='balanced', n_jobs=ncores)
+    param_dist = {"n_estimators": sp_randint(100, 500), "max_features": ['auto', 'sqrt']}
+    model = ensemble.RandomForestClassifier(class_weight='balanced_subsample', n_jobs=ncores)
 
-    n_iter_search = 10
-    rf_model = model_selection.RandomizedSearchCV(estimator=model, param_distributions=param_dist, n_iter=n_iter_search, cv=5)
+    n_iter_search = 100
+    rf_model = model_selection.RandomizedSearchCV(estimator=model, param_distributions=param_dist, n_iter=n_iter_search, scoring='accuracy',cv=5)#probar accuracy y precision
 
     rf_model.fit(X_train, y_train)
 
     print "Model selected: \"%s\"" % rf_model.best_estimator_
+
+    print "Best score: \"%s\"" % rf_model.best_score_
+
+    print "Best param: \"%s\"" % rf_model.best_params_
 
     ###############################################################################
     #testing model performance
